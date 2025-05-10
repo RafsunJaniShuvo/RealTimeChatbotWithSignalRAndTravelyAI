@@ -1,0 +1,141 @@
+﻿@{
+    Layout = "_Layout";
+}
+@section Styles{
+    <style>
+        /* Custom chat bubbles */
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 8px;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .other-message {
+            background-color: #e9ecef;
+            margin-right: auto;
+        }
+    </style>
+}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper vh-100 bg-light">
+    <!-- Loader Container -->
+@*     <div id="productTableLoader" class="d-flex justify-content-center align-items-center d-none" style="height: 200px;">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden"></span>
+        </div>
+    </div> *@
+    <!-- Content Header (Page header) -->
+   @*  <div class="content-header">
+        <div class="container-fluid">
+            <input type="text" id="userInput" placeholder="Your name" />
+            <input type="text" id="messageInput" placeholder="Your message" />
+            <button id="sendButton">Send</button>
+            <div id="messagesList"></div>
+        </div>
+     </div> *@
+    <div class="content-header p-3 bg-white shadow-sm">
+        <div class="container-fluid">
+            <h4 class="mb-3">Chat Application</h4>
+            <div class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <input type="text"
+                           id="userInput"
+                           class="form-control"
+                           placeholder="Your name">
+                </div>
+                <div class="col-md-7">
+                    <input type="text"
+                           id="messageInput"
+                           class="form-control"
+                           placeholder="Your message">
+                </div>
+                <div class="col-md-2">
+                    <button id="sendButton"
+                            class="btn btn-primary w-100">
+                        Send
+                    </button>
+                </div>
+            </div>
+
+            <div id="messagesList"
+                 class="bg-white p-3 rounded shadow-sm overflow-auto"
+                 style="height: 60vh">
+                <!-- Messages will appear here -->
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script>
+        // Show the loader
+        //document.getElementById("productTableLoader").style.display = "flex";
+        // debugger
+        // const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
+
+        // connection.on("ReceiveMessage", function (user, message) {
+        //     const msg = document.createElement("div");
+        //     msg.textContent = `${user}: ${message}`;
+        //     document.getElementById("messagesList").appendChild(msg);
+        // });
+
+        // connection.start().catch(err => console.error(err.toString()));
+
+        // document.getElementById("sendButton").addEventListener("click", function (event) {
+        //     const user = document.getElementById("userInput").value;
+        //     const message = document.getElementById("messageInput").value;
+        //     connection.invoke("SendMessage", user, message).catch(err => console.error(err.toString()));
+        //     event.preventDefault();
+        // });
+
+        const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
+
+        connection.on("ReceiveMessage", function (user, message) {
+            const msg = `${user}: ${message}`;
+            const li = document.createElement("li");
+            li.textContent = msg;
+            document.getElementById("messagesList").appendChild(li);
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        document.getElementById("sendButton").addEventListener("click", function (event) {
+            const user = document.getElementById("userInput").value;
+            const message = document.getElementById("messageInput").value;
+
+            // Send message to Web API
+            fetch('http://localhost:5235/api/Chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            })
+            .then(response => response.json())
+            .then(data => {
+                 //document.getElementById("productTableLoader").style.display = "none";
+                connection.invoke("SendMessage", data.botMessage).catch(err => console.error(err.toString()));
+
+            }).catch(error => {
+              console.error('Error fetching data:', error);
+              // Hide the loader in case of error
+              //document.getElementById("productTableLoader").style.display = "none";
+            });
+
+            event.preventDefault();
+        });
+    </script>
+}

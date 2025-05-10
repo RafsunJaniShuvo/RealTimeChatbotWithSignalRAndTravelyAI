@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "RoleBasedAuthenticationBackend\\WebApi.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "WebUI\\WebUI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
