@@ -49,7 +49,7 @@ namespace WebUI.Controllers
                 if (result != null)
                 {
                     HttpContext.Session.SetString("JWToken", result.Token);
-                    return RedirectToAction("List", "Product");
+                    return RedirectToAction("Index", "Bot");
                 }
             }
 

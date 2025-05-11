@@ -1,57 +1,21 @@
-﻿  <!-- Main Sidebar Container -->
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <a href="#" class="brand-link">
-        <img src="~/images/LRL.png" alt="Limerick Resources LTD" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">Limerick Resources</span>
-
-    </a>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <nav class="mt-5">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" && ViewContext.RouteData.Values["Action"]?.ToString() == "List" ? "active" : "")"
-                       asp-controller="Product" asp-action="List">
-                      <i class="fas fa-box-open"></i>
-                        <p>
-                           Product Management
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Sales" && ViewContext.RouteData.Values["Action"]?.ToString() == "List" ? "active" : "")"
-                       asp-controller="Sales" asp-action="List">
-                        <i class="fas fa-cash-register"></i>
-                        <p>
-                            Sales Management
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Report" ? "menu-open" : "")">
-                    <a href="#" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Report" ? "active" : "")">
-                        <i class="fas fa-file-alt"></i>
-                        <p>
-                            Report
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "CurrentStockReport" ? "active" : "")">
-                            <a asp-controller="Report" asp-action="CurrentStockReport" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Current Stock Report</p>
-                            </a>
-                        </li>
-                        <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "DateWiseStockReport" ? "active" : "")">
-                            <a asp-controller="Report" asp-action="DateWiseStockReport" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Date Wise Stock Report</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-    </div>
+﻿<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <li class="nav-item has-treeview @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Chat" ? "menu-open" : "")">
+        <a href="#" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Chat" ? "active" : "")">
+            <i class="fas fa-comments"></i>
+            <p>
+                Chat History
+                <i class="right fas fa-angle-left"></i>
+            </p>
+        </a>
+        <ul class="nav nav-treeview" id="chatHistoryList">
+            <li class="nav-item loading-history">
+                <div class="nav-link">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading history...</p>
+                </div>
+            </li>
+        </ul>
+    </li>
 </aside>
+
+

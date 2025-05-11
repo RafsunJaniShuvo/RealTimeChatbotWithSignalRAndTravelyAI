@@ -3,7 +3,6 @@
 }
 @section Styles{
     <style>
-        /* Custom chat bubbles */
         .message-bubble {
             max-width: 80%;
             padding: 12px;
@@ -24,22 +23,13 @@
     </style>
 }
 <!-- Content Wrapper. Contains page content -->
+<div class="text-center" id="aiChatBotLoader" style="display: none;">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden"></span>
+    </div>
+</div>
 <div class="content-wrapper vh-100 bg-light">
-    <!-- Loader Container -->
-@*     <div id="productTableLoader" class="d-flex justify-content-center align-items-center d-none" style="height: 200px;">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden"></span>
-        </div>
-    </div> *@
-    <!-- Content Header (Page header) -->
-   @*  <div class="content-header">
-        <div class="container-fluid">
-            <input type="text" id="userInput" placeholder="Your name" />
-            <input type="text" id="messageInput" placeholder="Your message" />
-            <button id="sendButton">Send</button>
-            <div id="messagesList"></div>
-        </div>
-     </div> *@
+    
     <div class="content-header p-3 bg-white shadow-sm">
         <div class="container-fluid">
             <h4 class="mb-3">Chat Application</h4>
@@ -63,79 +53,69 @@
                     </button>
                 </div>
             </div>
-
-            <div id="messagesList"
-                 class="bg-white p-3 rounded shadow-sm overflow-auto"
-                 style="height: 60vh">
-                <!-- Messages will appear here -->
+            <div id="typingIndicator" style="display: none;">
+                <span>Bot is typing...</span>
+            </div>
+            <div id="messagesList"class="bg-white p-3 rounded shadow-sm overflow-auto"style="height: 60vh">
             </div>
         </div>
     </div>
 
 </div>
-
-
-
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
-        // Show the loader
-        //document.getElementById("productTableLoader").style.display = "flex";
-        // debugger
-        // const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
+        $(document).ready(function() {
+            const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
 
-        // connection.on("ReceiveMessage", function (user, message) {
-        //     const msg = document.createElement("div");
-        //     msg.textContent = `${user}: ${message}`;
-        //     document.getElementById("messagesList").appendChild(msg);
-        // });
-
-        // connection.start().catch(err => console.error(err.toString()));
-
-        // document.getElementById("sendButton").addEventListener("click", function (event) {
-        //     const user = document.getElementById("userInput").value;
-        //     const message = document.getElementById("messageInput").value;
-        //     connection.invoke("SendMessage", user, message).catch(err => console.error(err.toString()));
-        //     event.preventDefault();
-        // });
-
-        const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
-
-        connection.on("ReceiveMessage", function (user, message) {
-            const msg = `${user}: ${message}`;
-            const li = document.createElement("li");
-            li.textContent = msg;
-            document.getElementById("messagesList").appendChild(li);
-        });
-
-        connection.start().catch(function (err) {
-            return console.error(err.toString());
-        });
-
-        document.getElementById("sendButton").addEventListener("click", function (event) {
-            const user = document.getElementById("userInput").value;
-            const message = document.getElementById("messageInput").value;
-
-            // Send message to Web API
-            fetch('http://localhost:5235/api/Chat/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(message)
-            })
-            .then(response => response.json())
-            .then(data => {
-                 //document.getElementById("productTableLoader").style.display = "none";
-                connection.invoke("SendMessage", data.botMessage).catch(err => console.error(err.toString()));
-
-            }).catch(error => {
-              console.error('Error fetching data:', error);
-              // Hide the loader in case of error
-              //document.getElementById("productTableLoader").style.display = "none";
+            connection.on("ReceiveMessage", function(user, message) {
+                $('#aiChatBotLoader').hide();
+                const msg = `${user}: ${message}`;
+                $('#messagesList').append($('<li>').text(msg));
+                $('#typingIndicator').hide();
+                loadChatHistory();
             });
 
-            event.preventDefault();
+            connection.on("BotIsTyping", function(isTyping) {
+                $('#typingIndicator').show();
+            });
+
+            connection.start().catch(function(err) {
+                console.error(err.toString());
+            });
+
+            $('#sendButton').on('click', function(event) {
+                event.preventDefault();
+                const user = $('#userInput').val();
+                const message = $('#messageInput').val();
+                //const token = localStorage.getItem('authToken');
+
+                if (!user || !message) {
+                    toastr.error('Username and message fields cannot be empty.', 'Opps!');
+                    return;
+                }
+
+                $('#aiChatBotLoader').show();
+
+                fetch('http://localhost:5235/api/Chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userName: user,
+                        userMessage: message
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    connection.invoke("SendMessage", data.botMessage).catch(err => console.error(err.toString()));
+                })
+                .catch(error => {
+                    $('#aiChatBotLoader').hide();
+                });
+            });
         });
     </script>
 }

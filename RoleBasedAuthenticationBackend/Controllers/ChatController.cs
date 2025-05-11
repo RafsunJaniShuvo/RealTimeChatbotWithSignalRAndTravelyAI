@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 using WebApi.DTOs;
 using WebApi.Hubs;
 using WebApi.Models;
@@ -12,6 +14,7 @@ namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IChatMessageRepository _chatMessageRepository;
@@ -28,26 +31,24 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendMessage([FromBody] string userMessage)
+        public async Task<IActionResult> SendMessage([FromBody] ChatRequestDto chatRequest)
         {
-
-            var sessionId = Guid.NewGuid().ToString(); 
-            var userId = "user123"; 
+            var sessionId = Guid.NewGuid().ToString();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var timestamp = DateTime.UtcNow;
-
-            // 1. Save user's message
             var userChatMessage = new ChatMessage
             {
                 UserId = Guid.NewGuid().ToString(),
                 SessionId = sessionId,
-                Sender = "User",
-                Message = userMessage,
+                Sender = chatRequest.UserName,
+                Message = chatRequest.UserMessage,
                 Timestamp = DateTime.UtcNow
             };
 
-            var botReply = await _tavilyService.GetBotResponseAsync(userMessage);
+            var savedUserMessage = _chatMessageRepository.AddMessageAsync(userChatMessage);
 
-            // 3. Save bot's response
+            var botReply = await _tavilyService.GetBotResponseAsync(chatRequest.UserMessage);
+
             var botChatMessage = new ChatMessage
             {
                 UserId = userId,
@@ -59,14 +60,19 @@ namespace WebApi.Controllers
 
             var savedBotMessage = await _chatMessageRepository.AddMessageAsync(botChatMessage);
 
-            // 4. Return both messages
             return Ok(new
             {
-                UserMessage = "",//savedUserMessage,
+                UserMessage = savedUserMessage,
                 BotMessage = savedBotMessage
             });
         }
-        
+
+        [HttpGet("AllHistory")]
+        public async Task<IActionResult> AllHistory()
+        {
+            var messages = await _chatMessageRepository.GetAllChatAsync();
+            return Ok(messages);
+        }
 
         [HttpGet("history")]
         public async Task<IActionResult> GetHistory([FromQuery] string sessionId)

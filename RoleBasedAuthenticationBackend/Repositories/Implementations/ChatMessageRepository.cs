@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RoleBasedAuthenticationBackend.Data;
+using System.Linq;
 using WebApi.Models;
 using WebApi.Repositories.Interfaces;
 
@@ -21,13 +22,18 @@ namespace WebApi.Repositories.Implementations
             return message;
         }
 
-        public async Task<IEnumerable<ChatMessage>> GetMessagesAsync(string sessionId)
+        public async Task<IEnumerable<ChatMessage>> GetAllChatAsync()
+        {
+            return await _context.ChatMessages.Where(x => x.Sender != "Bot" && !x.IsDeleted).OrderByDescending(x => x.Timestamp).ToListAsync();
+        }
+        public async Task<ChatMessage> GetMessagesAsync(string sessionId)
         {
             return await _context.ChatMessages
                                  .Where(m => m.SessionId == sessionId && !m.IsDeleted)
                                  .OrderBy(m => m.Timestamp)
-                                 .ToListAsync();
+                                 .FirstOrDefaultAsync();
         }
+
 
         public async Task<ChatMessage> UpdateMessageAsync(ChatMessage updatedMessage)
         {

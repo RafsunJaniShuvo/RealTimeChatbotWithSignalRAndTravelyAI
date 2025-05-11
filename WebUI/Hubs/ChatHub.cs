@@ -13,6 +13,8 @@ namespace WebUI.Hubs
     {
         public async Task SendMessage(ChatMessage chatMessage)
         {
+            await Clients.Caller.SendAsync("BotIsTyping", true);
+
             await Clients.All.SendAsync("ReceiveMessage", chatMessage.Sender, chatMessage.Message);
         }
     }
