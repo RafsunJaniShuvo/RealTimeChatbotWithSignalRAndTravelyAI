@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RoleBasedAuthenticationBackend.Data;
 using RoleBasedAuthenticationBackend.Middlewares;
-using RoleBasedAuthenticationBackend.Repositories.Implementations;
-using RoleBasedAuthenticationBackend.Repositories.Interfaces;
 using System.Net.Http.Headers;
 using System.Text;
 using WebApi.Hubs;
@@ -38,19 +36,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(option =>
 option.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<ISaleRepository, SaleRepository>();
-builder.Services.AddScoped<ISaleService, SaleService>();
-builder.Services.AddScoped<IReportRepository, ReportRepository>();
-builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
-
-
-
-
-
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {

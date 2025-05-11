@@ -1,4 +1,4 @@
-﻿@inject IHttpContextAccessor HttpContextAccessor
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @{
     var token = HttpContextAccessor.HttpContext?.Session.GetString("JWToken");
     var isAuthenticated = !string.IsNullOrEmpty(token);
@@ -7,15 +7,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   @*  <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebUI</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/WebUI.styles.css" asp-append-version="true" /> *@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sales and Stock Reporting System</title>
+    <title>Real Time Chatbot</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -31,17 +25,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link href="~/admin/dist/css/adminlte.css" rel="stylesheet" />
-   
+
     <link rel="stylesheet" href="~/admin/plugins/daterangepicker/daterangepicker.css">
 
     <link href="https://cdn.datatables.net/2.3.0/css/dataTables.dataTables.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/gh/lafeber/world-flags-sprite/stylesheets/flags32-both.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href="~/css/custom-css.css" rel="stylesheet" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
-   
+
     <div class="wrapper">
         <partial name="_TopNavbar" />
         <partial name="_Sidebar" />
@@ -50,11 +45,6 @@
         </main>
         <partial name="_Footer" />
     </div>
-   
-  @*   <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script> *@
-    <!-- jQuery -->
     <script src="~/admin/plugins/jquery/jquery.min.js"></script>
     <!-- jQuery UI 1.11.4 -->
     <script src="~/admin/plugins/jquery-ui/jquery-ui.min.js"></script>
@@ -73,8 +63,201 @@
 
     <script src="https://cdn.datatables.net/2.3.0/js/dataTables.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-   @*  <script src="~/admin/plugins/datatables/jquery.datatables.js"></script> *@
-     @* <script src="~/admin/plugins/datatables/jquery.datatables.min.js"></script> *@
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+         var token = '@(HttpContextAccessor.HttpContext.Session.GetString("JWToken") ?? "")';
+        $(document).ready(function() {
+            loadChatHistory();
+            $(document).on('chat-created', loadChatHistory);
+        });
+
+         function getUserRoleFromToken(token) {
+            const decodedToken = jwt_decode(token);
+            return decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        }
+
+         function loadChatHistory() {
+            $('#chatHistoryList').addClass('loading-history');
+
+             $.ajax({
+            url: 'http://localhost:5235/api/Chat/AllHistory',
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success: function(data) {
+                $('#chatHistoryList').empty();
+
+                $('#chatHistoryList').append(`
+                     <li class="nav-item chat-history-item new-chat-item">
+                        <a href="/Bot/Index" class="nav-link d-flex align-items-center justify-content-between px-3 py-2" onclick="startNewChat()" style="background-color: #1f2d3d; border-radius: 6px; margin: 6px 10px;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-plus-circle text-info me-2" style="font-size: 1.2rem;"></i>
+                                <span class="text-light fw-semibold">New Chat</span>
+                            </div>
+                        </a>
+                    </li>
+                `);
+
+                data.forEach(item => {
+                    const sanitizedMessage = $('<div>').text(item.message).html();
+                    const truncatedMessage = sanitizedMessage.length > 15 ?
+                        sanitizedMessage.substring(0, 12) + '...' :
+                        sanitizedMessage;
+
+                    const userRole = getUserRoleFromToken(token);
+
+                    const historyItem = `
+                      <li class="nav-item chat-history-item" data-chat-id="${item.id}">
+                          <a href="#" class="nav-link d-flex align-items-center" onclick="loadChat('${item.sessionId}')">
+                              <div class="d-flex align-items-center">
+                                  <i class="far fa-comment-dots me-2"></i>
+                                  <p class="mb-0">${truncatedMessage}</p>
+                              </div>
+                              ${userRole == 'Admin' ? `
+                                <div class="action-icons ms-2">
+                                    <i class="fas fa-check-circle text-success me-2 approve-icon"
+                                       onclick="handleApprove('${item.id}', event)"></i>
+                                    <i class="fas fa-trash-alt text-danger delete-icon"
+                                       onclick="handleDelete('${item.id}', event)"></i>
+                                </div>
+                              ` : ''}
+                          </a>
+                      </li>`;
+
+
+                    $('#chatHistoryList').append(historyItem);
+                });
+
+                if(data.length == 0) {
+                    $('#chatHistoryList').append(`
+                        <li class="nav-item">
+                            <div class="nav-link">
+                                <i class="far fa-folder-open"></i>
+                                <p>No chat history found</p>
+                            </div>
+                        </li>`);
+                }
+            },
+            error: function(xhr) {
+                if(xhr.status === 401) {
+                    handleUnauthorized();
+                } else {
+                    showError('Failed to load chat history');
+                }
+            },
+            complete: function() {
+                $('#chatHistoryList').removeClass('loading-history');
+            }
+        });
+            }
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function loadChat(sessionId) {
+
+            $('.chat-history-item').removeClass('active');
+
+            $(`.chat-history-item[data-chat-id="${sessionId}"]`).addClass('active');
+
+            $('#sendButton').text('Update');
+
+            $.ajax({
+            url: `http://localhost:5235/api/Chat/history?sessionId=${sessionId}`,
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success: function(chatData) {
+                $('#userInput').val(chatData.sender);
+                $('#messageInput').val(chatData.message);
+            },
+            error: function(xhr, status, error) {
+                if(xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                console.error('Error:', error);
+                }
+            });
+        }
+
+        function handleDelete(id, event) {
+            event.stopPropagation();
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `http://localhost:5235/api/Chat/${id}`,
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        success: () => {
+                            Swal.fire(
+                                'Deleted!',
+                                'Chat has been deleted.',
+                                'success'
+                            );
+                            loadChatHistory();
+                        },
+                        error: () => {
+                            Swal.fire(
+                                'Error!',
+                                'Something went wrong while deleting.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        }
+
+        function handleApprove(id, event) {
+            event.stopPropagation();
+            if(confirm('Are you sure you want to approve this chat?')) {
+                $.ajax({
+                    url: `http://localhost:5235/api/Chat/${id}/approve`,
+                    method: 'PATCH',
+                     headers: {
+                        'Authorization': `Bearer ${token}`
+                     },
+                    success: () => {
+                        showToast('Chat approved successfully');
+                    }
+                });
+            }
+        }
+
+        function showToast(message) {
+            const toast = `<div class="toast align-items-center text-white bg-success border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>`;
+
+            $('.toast-container').append(toast);
+            $('.toast').toast('show');
+        }
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

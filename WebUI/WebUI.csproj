@@ -7,7 +7,36 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Product\**" />
+    <Compile Remove="Views\Report\**" />
+    <Compile Remove="Views\Sales\**" />
+    <Content Remove="Views\Product\**" />
+    <Content Remove="Views\Report\**" />
+    <Content Remove="Views\Sales\**" />
+    <EmbeddedResource Remove="Views\Product\**" />
+    <EmbeddedResource Remove="Views\Report\**" />
+    <EmbeddedResource Remove="Views\Sales\**" />
+    <None Remove="Views\Product\**" />
+    <None Remove="Views\Report\**" />
+    <None Remove="Views\Sales\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\ProductController.cs" />
+    <Compile Remove="Controllers\ReportController.cs" />
+    <Compile Remove="Controllers\SalesController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Views\Home\Index.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\Home\" />
   </ItemGroup>
 
 </Project>
