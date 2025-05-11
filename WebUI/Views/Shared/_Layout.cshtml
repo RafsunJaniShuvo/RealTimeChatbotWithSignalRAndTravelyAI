@@ -45,11 +45,6 @@
         </main>
         <partial name="_Footer" />
     </div>
-
-    @*   <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script> *@
-    <!-- jQuery -->
     <script src="~/admin/plugins/jquery/jquery.min.js"></script>
     <!-- jQuery UI 1.11.4 -->
     <script src="~/admin/plugins/jquery-ui/jquery-ui.min.js"></script>
@@ -70,8 +65,6 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
     <script>
          var token = '@(HttpContextAccessor.HttpContext.Session.GetString("JWToken") ?? "")';
         $(document).ready(function() {
@@ -189,16 +182,11 @@
             },
             error: function(xhr, status, error) {
                 if(xhr.status === 401) {
-                    // Handle unauthorized access
                     window.location.href = '/login';
                 }
                 console.error('Error:', error);
                 }
             });
-            // $.get(`http://localhost:5235/api/Chat/history?sessionId=${sessionId}`, function(chatData) {
-            //     $('#userInput').val(chatData.sender);
-            //     $('#messageInput').val(chatData.message);
-            // });
         }
 
         function handleDelete(id, event) {
