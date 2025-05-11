@@ -109,8 +109,8 @@
 
                 data.forEach(item => {
                     const sanitizedMessage = $('<div>').text(item.message).html();
-                    const truncatedMessage = sanitizedMessage.length > 18 ?
-                        sanitizedMessage.substring(0, 15) + '...' :
+                    const truncatedMessage = sanitizedMessage.length > 15 ?
+                        sanitizedMessage.substring(0, 12) + '...' :
                         sanitizedMessage;
 
                     const userRole = getUserRoleFromToken(token);
