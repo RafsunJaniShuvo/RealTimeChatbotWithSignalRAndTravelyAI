@@ -126,6 +126,6 @@ To assign roles to new users:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ai-chatbot.git
+https://github.com/RafsunJaniShuvo/RealTimeChatbotWithSignalRAndTravelyAI.git
 
 
